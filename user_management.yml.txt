@@ -1,0 +1,38 @@
+
+---
+- hosts: localhost
+  user: root
+  tasks:
+  #This task add newusers on remote machine and loop is used here
+  - name: add a user
+    user: 
+      name: "{{ item }}" 
+      state: present 
+      password: "P@ssw0rd@321" 
+      shell: /bin/bash	
+    with_items:
+    - user1
+    - user2
+    tags: add_new_user		
+  #This task generate public keys for users
+  - name: generate ssh key for users
+    user: name={{ item }} generate_ssh_key=yes ssh_key_bits=4096 sh_key_file=.ssh/id_rsa
+    with_items:
+    - user1
+    - user2
+    tags: generate_ssh_keys	
+  #This task is to copy public keys to user account
+  - name: copy authorized key for a user
+    authorized_key:
+      user: user1
+      state: present
+      key: "{{ lookup('file', '/home/user1/.ssh/id_rsa.pub') }}"
+    tags: copy_pub_key
+
+  #This task is to delete the users
+  - name: delete several users
+    user: name={{ item }} state=absent
+    with_items:
+    - user1
+    - user2
+    tags: remove_user
